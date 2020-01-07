@@ -10,6 +10,9 @@
 
 using namespace std;
 
+int countNumberOfMatchesBetweenTwoBoxes(const int currentFrameBB_id, const int prevFrameBB_id, const multimap <int, int> &multimapCurrentFrame,
+    const multimap <int, int> &multimapPrevFrame);
+
 
 // Create groups of Lidar points whose projection into the camera falls into the same bounding box
 void clusterLidarWithROI(std::vector<BoundingBox> &boundingBoxes, std::vector<LidarPoint> &lidarPoints, float shrinkFactor, cv::Mat &P_rect_xx, cv::Mat &R_rect_xx, cv::Mat &RT)
@@ -154,5 +157,78 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
-    // ...
+    multimap <int, int> multimapCurrentFrame;
+    multimap <int, int> multimapPrevFrame;
+    int matchesIdx = 0;
+    for(auto matchesit = matches.begin(); matchesit != matches.end(); ++matchesit, ++matchesIdx)
+    {
+        int currentFrameKeypointIdx = matchesit->trainIdx;
+        int prevFrameKeypointIdx = matchesit->queryIdx;
+
+        auto currentFrameKeypoint = currFrame.keypoints[currentFrameKeypointIdx];
+        auto prevFrameKeypoint = prevFrame.keypoints[prevFrameKeypointIdx];
+
+        //find by which bounding boxes keypoints are enclosed in the previous and current frame.
+        //Those are the potential candidates whose box ids I can store in a multimap
+        for(auto& boundingBox : currFrame.boundingBoxes)
+        {
+            for(auto& keypoint : boundingBox.keypoints)
+            {
+                if(cv::KeyPoint::overlap(currentFrameKeypoint, keypoint))
+                {
+                    multimapCurrentFrame.insert(pair<int, int>(boundingBox.boxID, matchesIdx));
+                }
+            }
+        }
+
+        for(auto& boundingBox : prevFrame.boundingBoxes)
+        {
+            for(auto& keypoint : boundingBox.keypoints)
+            {
+                if(cv::KeyPoint::overlap(prevFrameKeypoint, keypoint))
+                {
+                    multimapPrevFrame.insert(pair<int, int>(boundingBox.boxID, matchesIdx));
+                }
+            }
+        }
+    }
+
+    for(auto& currFrameBB : currFrame.boundingBoxes)
+    {
+        int maxNumberMatchesFound = 0;
+        int maxNumberMatchesFoundBoundedBoxIdInPrevFrame = -1;
+        for(auto& prevFrameBB : prevFrame.boundingBoxes)
+        {
+            int countNumMatches = countNumberOfMatchesBetweenTwoBoxes(currFrameBB.boxID, prevFrameBB.boxID, multimapCurrentFrame, multimapPrevFrame);
+            if(maxNumberMatchesFound < countNumMatches)
+            {
+                maxNumberMatchesFound = countNumMatches;  
+                maxNumberMatchesFoundBoundedBoxIdInPrevFrame =  prevFrameBB.boxID;       
+            }
+        }
+        if(maxNumberMatchesFound > 0)
+        {
+            bbBestMatches[currFrameBB.boxID] = maxNumberMatchesFoundBoundedBoxIdInPrevFrame;
+        }
+    }
+}
+
+int countNumberOfMatchesBetweenTwoBoxes(const int currentFrameBB_id, const int prevFrameBB_id, const multimap <int, int> &multimapCurrentFrame,
+    const multimap <int, int> &multimapPrevFrame)
+{
+    int countNumberOfMatches = 0;
+    auto currentFramBB_iterSet = multimapCurrentFrame.equal_range(currentFrameBB_id);
+    auto prevFramBB_iterSet = multimapPrevFrame.equal_range(prevFrameBB_id);
+    
+    for(auto currentIt = currentFramBB_iterSet.first; currentIt != currentFramBB_iterSet.second; ++currentIt)
+    {
+        int currFrameKeyPointMatcherIdx = currentIt->second;
+        for(auto prevIt = prevFramBB_iterSet.first; prevIt != prevFramBB_iterSet.second; ++prevIt)
+        {
+            int prevFrameKeyPointMatcherIdx = prevIt->second;
+            if(currFrameKeyPointMatcherIdx == prevFrameKeyPointMatcherIdx)
+                ++countNumberOfMatches;
+        }
+    }
+    return countNumberOfMatches;
 }
