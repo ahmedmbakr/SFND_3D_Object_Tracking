@@ -137,7 +137,7 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr,
  std::vector<cv::DMatch> &kptMatches)
 {
-    cout << "Enter clusterKptMatchesWithROI\n";
+    //cout << "Enter clusterKptMatchesWithROI\n";
     //If the distance is diff from the mean is less than this variable then it is considered as an error
     float maxAllowedDistance = 3;
     //Fill enclosed keypoints
@@ -166,7 +166,7 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
         }
     }
     mean /= numMatchesInsideBB;
-    cout<< "mean = " << mean << endl;
+    //cout<< "mean = " << mean << endl;
     for(auto &kptMatch : kptMatches)
     {
         auto kptCurrIdx = kptMatch.trainIdx;
@@ -178,10 +178,10 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
         auto absDist = cv::norm(kptCurr.pt - kptprev.pt);
         if(boundingBox.roi.contains(kptCurr.pt) && boundingBox.roi.contains(kptprev.pt))
         {
-            cout<< "absDist = " << absDist<< endl;
+            //cout<< "absDist = " << absDist<< endl;
             if(abs(absDist - mean) < maxAllowedDistance)
-{
-                cout << "Added new kptMatch to the bounding box\n";
+            {
+                //cout << "Added new kptMatch to the bounding box\n";
                 boundingBox.kptMatches.push_back(kptMatch);
             }
         }
