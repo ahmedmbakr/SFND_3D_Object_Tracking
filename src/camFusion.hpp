@@ -11,6 +11,7 @@
 #define STD_OFF 0
 
 #define PERFORMANCE_EVAL_CTRL (STD_ON)
+#define OUTPUT_TO_CSV_ENABLE (STD_ON)
 
 void clusterLidarWithROI(std::vector<BoundingBox> &boundingBoxes, std::vector<LidarPoint> &lidarPoints, float shrinkFactor, cv::Mat &P_rect_xx, cv::Mat &R_rect_xx, cv::Mat &RT);
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches);
