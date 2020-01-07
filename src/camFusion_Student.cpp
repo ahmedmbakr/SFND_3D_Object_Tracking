@@ -284,13 +284,17 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 
     // compute TTC from both measurements
     TTC = averageXCurr * dT / (averageXPrev-averageXCurr);
+    #if(PERFORMANCE_EVAL_CTRL != STD_ON)
     cout << "TTC lidar = " << TTC <<endl;
+    #endif
 }
 
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
+    #if(PERFORMANCE_EVAL_CTRL != STD_ON)
     cout << "Enter matching bounding boxes\n";
+    #endif
     multimap <int, int> multimapCurrentFrame;
     multimap <int, int> multimapPrevFrame;
     int matchesIdx = 0;
