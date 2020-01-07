@@ -153,14 +153,7 @@ int main(int argc, const char *argv[])
         vector<cv::KeyPoint> keypoints; // create empty feature list for current image
         string detectorType = "SHITOMASI";
 
-        if (detectorType.compare("SHITOMASI") == 0)
-        {
-            detKeypointsShiTomasi(keypoints, imgGray, false);
-        }
-        else
-        {
-            //...
-        }
+        detKeypointsModern(keypoints, imgGray, detectorType, false);
 
         // optional : limit number of keypoints (helpful for debugging and learning)
         bool bLimitKpts = false;
@@ -171,6 +164,17 @@ int main(int argc, const char *argv[])
             if (detectorType.compare("SHITOMASI") == 0)
             { // there is no response info, so keep the first 50 as they are sorted in descending quality order
                 keypoints.erase(keypoints.begin() + maxKeypoints, keypoints.end());
+            }
+            else
+            {
+
+                srand(time(0));  // Initialize random number generator.
+                int counter = maxKeypoints;
+                while(--counter)
+                {
+                    int r = (rand() % keypoints.size());
+                    keypoints.erase(keypoints.begin() + r, keypoints.begin() + r + 1);
+                }
             }
             cv::KeyPointsFilter::retainBest(keypoints, maxKeypoints);
             cout << " NOTE: Keypoints have been limited!" << endl;
