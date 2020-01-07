@@ -134,9 +134,58 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 
 
 // associate a given bounding box with the keypoints it contains
-void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
+void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr,
+ std::vector<cv::DMatch> &kptMatches)
 {
-    // ...
+    cout << "Enter clusterKptMatchesWithROI\n";
+    //If the distance is diff from the mean is less than this variable then it is considered as an error
+    float maxAllowedDistance = 3;
+    //Fill enclosed keypoints
+    for(auto &kptCurr : kptsCurr)
+    {
+        if(boundingBox.roi.contains(kptCurr.pt))
+            boundingBox.keypoints.push_back(kptCurr);
+    }
+
+    //Compute mean
+    float mean = 0;
+    int numMatchesInsideBB = 0;
+    for(auto &kptMatch : kptMatches)
+    {
+        auto kptCurrIdx = kptMatch.trainIdx;
+        auto kptPrevIdx = kptMatch.queryIdx;
+
+        auto kptCurr = kptsCurr[kptCurrIdx];
+        auto kptprev = kptsPrev[kptPrevIdx];
+
+        auto absDist = cv::norm(kptCurr.pt - kptprev.pt);
+        if(boundingBox.roi.contains(kptCurr.pt) && boundingBox.roi.contains(kptprev.pt))
+        {
+            mean += absDist;
+            ++numMatchesInsideBB;
+        }
+    }
+    mean /= numMatchesInsideBB;
+    cout<< "mean = " << mean << endl;
+    for(auto &kptMatch : kptMatches)
+    {
+        auto kptCurrIdx = kptMatch.trainIdx;
+        auto kptPrevIdx = kptMatch.queryIdx;
+
+        auto kptCurr = kptsCurr[kptCurrIdx];
+        auto kptprev = kptsPrev[kptPrevIdx];
+
+        auto absDist = cv::norm(kptCurr.pt - kptprev.pt);
+        if(boundingBox.roi.contains(kptCurr.pt) && boundingBox.roi.contains(kptprev.pt))
+        {
+            cout<< "absDist = " << absDist<< endl;
+            if(abs(absDist - mean) < maxAllowedDistance)
+{
+                cout << "Added new kptMatch to the bounding box\n";
+                boundingBox.kptMatches.push_back(kptMatch);
+            }
+        }
+    }
 }
 
 
