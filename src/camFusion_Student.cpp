@@ -188,25 +188,25 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
         }
     }
 
-    for(auto& currFrameBB : currFrame.boundingBoxes)
+    for(auto& prevFrameBB : prevFrame.boundingBoxes)
     {
         int maxNumberMatchesFound = 0;
-        int maxNumberMatchesFoundBoundedBoxIdInPrevFrame = -1;
-        for(auto& prevFrameBB : prevFrame.boundingBoxes)
+        int maxNumberMatchesFoundBoundedBoxIdInCurrFrame = -1;
+        for(auto& currFrameBB : currFrame.boundingBoxes)
         {
             int countNumMatches = countNumberOfMatchesBetweenTwoBoxes(currFrameBB.boxID, prevFrameBB.boxID, multimapCurrentFrame, multimapPrevFrame);
             if(maxNumberMatchesFound < countNumMatches)
             {
                 maxNumberMatchesFound = countNumMatches;  
-                maxNumberMatchesFoundBoundedBoxIdInPrevFrame =  prevFrameBB.boxID;       
+                maxNumberMatchesFoundBoundedBoxIdInCurrFrame =  currFrameBB.boxID;       
             }
         }
         if(maxNumberMatchesFound > 0)
         {
-            cout << "assigning "<< currFrameBB.boxID << " from current frame to " << 
+            /*cout << "assigning "<< currFrameBB.boxID << " from current frame to " << 
             maxNumberMatchesFoundBoundedBoxIdInPrevFrame << " from prev frame and the number of matches points is "
-            << maxNumberMatchesFound << "\n";
-            bbBestMatches[currFrameBB.boxID] = maxNumberMatchesFoundBoundedBoxIdInPrevFrame;
+            << maxNumberMatchesFound << "\n";*/
+            bbBestMatches[prevFrameBB.boxID] = maxNumberMatchesFoundBoundedBoxIdInCurrFrame;
         }
     }
 }
