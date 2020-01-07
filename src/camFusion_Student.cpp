@@ -157,6 +157,7 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
+    cout << "Enter matching bounding boxes\n";
     multimap <int, int> multimapCurrentFrame;
     multimap <int, int> multimapPrevFrame;
     int matchesIdx = 0;
@@ -172,23 +173,17 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
         //Those are the potential candidates whose box ids I can store in a multimap
         for(auto& boundingBox : currFrame.boundingBoxes)
         {
-            for(auto& keypoint : boundingBox.keypoints)
+            if(boundingBox.roi.contains(currentFrameKeypoint.pt))
             {
-                if(cv::KeyPoint::overlap(currentFrameKeypoint, keypoint))
-                {
-                    multimapCurrentFrame.insert(pair<int, int>(boundingBox.boxID, matchesIdx));
-                }
+                multimapCurrentFrame.insert(pair<int, int>(boundingBox.boxID, matchesIdx));
             }
         }
 
         for(auto& boundingBox : prevFrame.boundingBoxes)
         {
-            for(auto& keypoint : boundingBox.keypoints)
+            if(boundingBox.roi.contains(prevFrameKeypoint.pt))
             {
-                if(cv::KeyPoint::overlap(prevFrameKeypoint, keypoint))
-                {
-                    multimapPrevFrame.insert(pair<int, int>(boundingBox.boxID, matchesIdx));
-                }
+                multimapPrevFrame.insert(pair<int, int>(boundingBox.boxID, matchesIdx));
             }
         }
     }
@@ -208,6 +203,9 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
         }
         if(maxNumberMatchesFound > 0)
         {
+            cout << "assigning "<< currFrameBB.boxID << " from current frame to " << 
+            maxNumberMatchesFoundBoundedBoxIdInPrevFrame << " from prev frame and the number of matches points is "
+            << maxNumberMatchesFound << "\n";
             bbBestMatches[currFrameBB.boxID] = maxNumberMatchesFoundBoundedBoxIdInPrevFrame;
         }
     }
