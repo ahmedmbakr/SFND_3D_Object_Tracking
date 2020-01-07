@@ -147,25 +147,40 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
     // ...
 }
 
+bool compareTwoLidarPoints(LidarPoint& lp1, LidarPoint lp2)
+{
+    return lp1.x < lp2.x;
+}
+
 
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
     // auxiliary variables
+    float percentOfPointsToDecide = 0.1; //A number from 0 to 1 as example 0.1 means 10%
+    int currNumberOfPointsToDecide = percentOfPointsToDecide * lidarPointsCurr.size();
+    int prevNumberOfPointsToDecide = percentOfPointsToDecide * lidarPointsPrev.size();
     double dT = 1.0 / frameRate; // time between two measurements in seconds
 
+    sort(lidarPointsPrev.begin(), lidarPointsPrev.end(), compareTwoLidarPoints);
+    sort(lidarPointsCurr.begin(), lidarPointsCurr.end(), compareTwoLidarPoints);
     // find closest distance to Lidar points 
-    double minXPrev = 1e9, minXCurr = 1e9;
-    for(auto it=lidarPointsPrev.begin(); it!=lidarPointsPrev.end(); ++it) {
-        minXPrev = minXPrev>it->x ? it->x : minXPrev;
+    double averageXPrev = 0;
+    auto iteratorEnd = min(lidarPointsPrev.end(), lidarPointsPrev.begin() + prevNumberOfPointsToDecide);
+    for(auto it=lidarPointsPrev.begin(); it!=iteratorEnd; ++it) {
+        averageXPrev += it->x;
     }
+    averageXPrev /= prevNumberOfPointsToDecide;
 
-    for(auto it=lidarPointsCurr.begin(); it!=lidarPointsCurr.end(); ++it) {
-        minXCurr = minXCurr>it->x ? it->x : minXCurr;
+    double averageXCurr = 0;
+    iteratorEnd = min(lidarPointsCurr.end(), lidarPointsCurr.begin() + currNumberOfPointsToDecide);
+    for(auto it=lidarPointsCurr.begin(); it!=iteratorEnd; ++it) {
+        averageXCurr += it->x;
     }
+    averageXCurr /= currNumberOfPointsToDecide;
 
     // compute TTC from both measurements
-    TTC = minXCurr * dT / (minXPrev-minXCurr);
+    TTC = averageXCurr * dT / (averageXPrev-averageXCurr);
     cout << "TTC lidar = " << TTC <<endl;
 }
 
