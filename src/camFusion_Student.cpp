@@ -151,7 +151,22 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
-    // ...
+    // auxiliary variables
+    double dT = 1.0 / frameRate; // time between two measurements in seconds
+
+    // find closest distance to Lidar points 
+    double minXPrev = 1e9, minXCurr = 1e9;
+    for(auto it=lidarPointsPrev.begin(); it!=lidarPointsPrev.end(); ++it) {
+        minXPrev = minXPrev>it->x ? it->x : minXPrev;
+    }
+
+    for(auto it=lidarPointsCurr.begin(); it!=lidarPointsCurr.end(); ++it) {
+        minXCurr = minXCurr>it->x ? it->x : minXCurr;
+    }
+
+    // compute TTC from both measurements
+    TTC = minXCurr * dT / (minXPrev-minXCurr);
+    cout << "TTC lidar = " << TTC <<endl;
 }
 
 
@@ -189,28 +204,28 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
     }
     if(prevFrame.boundingBoxes.size() < currFrame.boundingBoxes.size())
     {
-    for(auto& prevFrameBB : prevFrame.boundingBoxes)
-    {
-        int maxNumberMatchesFound = 0;
-        int maxNumberMatchesFoundBoundedBoxIdInCurrFrame = -1;
-        for(auto& currFrameBB : currFrame.boundingBoxes)
+        for(auto& prevFrameBB : prevFrame.boundingBoxes)
         {
-            int countNumMatches = countNumberOfMatchesBetweenTwoBoxes(currFrameBB.boxID, prevFrameBB.boxID, multimapCurrentFrame, multimapPrevFrame);
-            if(maxNumberMatchesFound < countNumMatches)
+            int maxNumberMatchesFound = 0;
+            int maxNumberMatchesFoundBoundedBoxIdInCurrFrame = -1;
+            for(auto& currFrameBB : currFrame.boundingBoxes)
             {
-                maxNumberMatchesFound = countNumMatches;  
-                maxNumberMatchesFoundBoundedBoxIdInCurrFrame =  currFrameBB.boxID;       
+                int countNumMatches = countNumberOfMatchesBetweenTwoBoxes(currFrameBB.boxID, prevFrameBB.boxID, multimapCurrentFrame, multimapPrevFrame);
+                if(maxNumberMatchesFound < countNumMatches)
+                {
+                    maxNumberMatchesFound = countNumMatches;  
+                    maxNumberMatchesFoundBoundedBoxIdInCurrFrame =  currFrameBB.boxID;       
+                }
+            }
+            if(maxNumberMatchesFound > 0)
+            {
+                /*cout << "assigning "<< currFrameBB.boxID << " from current frame to " << 
+                maxNumberMatchesFoundBoundedBoxIdInPrevFrame << " from prev frame and the number of matches points is "
+                << maxNumberMatchesFound << "\n";*/
+                bbBestMatches[prevFrameBB.boxID] = maxNumberMatchesFoundBoundedBoxIdInCurrFrame;
             }
         }
-        if(maxNumberMatchesFound > 0)
-        {
-            /*cout << "assigning "<< currFrameBB.boxID << " from current frame to " << 
-            maxNumberMatchesFoundBoundedBoxIdInPrevFrame << " from prev frame and the number of matches points is "
-            << maxNumberMatchesFound << "\n";*/
-            bbBestMatches[prevFrameBB.boxID] = maxNumberMatchesFoundBoundedBoxIdInCurrFrame;
-        }
     }
-}
     else
     {
         for(auto& currFrameBB : currFrame.boundingBoxes)
