@@ -125,9 +125,14 @@ void showLidarImgOverlay(cv::Mat &img, std::vector<LidarPoint> &lidarPoints, cv:
             pt.y = Y.at<double>(1, 0) / Y.at<double>(0, 2);
 
             float val = it->x;
-            int red = min(255, (int)(255 * abs((val - maxVal) / maxVal)));
-            int green = min(255, (int)(255 * (1 - abs((val - maxVal) / maxVal))));
-            cv::circle(overlay, pt, 5, cv::Scalar(0, green, red), -1);
+            //int red = min(255, (int)(255 * abs((val - maxVal) / maxVal)));
+            //int green = min(255, (int)(255 * (1 - abs((val - maxVal) / maxVal))));
+            cv::Vec3b color = img.at<cv::Vec3b>(pt.y,pt.x);
+            int red = color[2];
+            int green = color[1];
+            int blue = color[0];
+
+            cv::circle(overlay, pt, 5, cv::Scalar(blue, green, red), -1);
     }
 
     float opacity = 0.6;

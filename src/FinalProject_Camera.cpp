@@ -129,7 +129,7 @@ void defaultMain()
         loadLidarFromFile(lidarPoints, lidarFullFilename);
 
         // remove Lidar points based on distance properties
-        float minZ = -1.5, maxZ = -0.9, minX = 2.0, maxX = 20.0, maxY = 2.0, minR = 0.1; // focus on ego lane
+        float minZ = -1.5, maxZ = 1.2, minX = 0, maxX = 30.0, maxY = 4.0, minR = 0.1; // focus on ego lane
         cropLidarPoints(lidarPoints, minX, maxX, maxY, minZ, maxZ, minR);
     
         (dataBuffer.end() - 1)->lidarPoints = lidarPoints;
@@ -250,6 +250,8 @@ void defaultMain()
             /* COMPUTE TTC ON OBJECT IN FRONT */
 
             // loop over all BB match pairs
+            cv::Mat img = (dataBuffer.end() - 1)->cameraImg.clone();
+            cv::Mat visImg = cv::Mat::zeros(img.size(), img.type());
             for (auto it1 = (dataBuffer.end() - 1)->bbMatches.begin(); it1 != (dataBuffer.end() - 1)->bbMatches.end(); ++it1)
             {
                 // find bounding boxes associates with current match
@@ -290,25 +292,27 @@ void defaultMain()
                     bVis = true;
                     if (bVis)
                     {
-                        cv::Mat visImg = (dataBuffer.end() - 1)->cameraImg.clone();
-                        showLidarImgOverlay(visImg, currBB->lidarPoints, P_rect_00, R_rect_00, RT, &visImg);
+                        showLidarImgOverlay(img, currBB->lidarPoints, P_rect_00, R_rect_00, RT, &visImg);
                         cv::rectangle(visImg, cv::Point(currBB->roi.x, currBB->roi.y), cv::Point(currBB->roi.x + currBB->roi.width, currBB->roi.y + currBB->roi.height), cv::Scalar(0, 255, 0), 2);
                         
-                        char str[200];
-                        sprintf(str, "TTC Lidar : %f s, TTC Camera : %f s", ttcLidar, ttcCamera);
-                        putText(visImg, str, cv::Point2f(80, 50), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0,0,255));
+                        //char str[200];
+                        //sprintf(str, "TTC Lidar : %f s, TTC Camera : %f s", ttcLidar, ttcCamera);
+                        //putText(visImg, str, cv::Point2f(80, 50), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0,0,255));
 
-                        string windowName = "Final Results : TTC";
+                        
+                    }
+
+                } // eof TTC computation
+            } // eof loop over all BB matches
+            if(bVis)
+            {
+                string windowName = "Final Results : Colored Point cloud";
                         cv::namedWindow(windowName, 4);
                         cv::imshow(windowName, visImg);
                         cout << "Press key to continue to next frame" << endl;
                         cv::waitKey(0);
                     }
                     bVis = false;
-
-                } // eof TTC computation
-            } // eof loop over all BB matches            
-
         }
 
     } // eof loop over all images
